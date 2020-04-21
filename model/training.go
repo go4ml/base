@@ -2,12 +2,12 @@ package model
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/iokit"
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/fu/lazy"
 	"go-ml.dev/pkg/base/tables"
+	"go-ml.dev/pkg/iokit"
+	"go-ml.dev/pkg/zorros"
 	"go-ml.dev/pkg/zorros/zlog"
-	"go-ml.dev/pkg/zorros/zorros"
 	"io"
 	"reflect"
 )
@@ -133,7 +133,7 @@ func (w *workout) Complete(m MemorizeMap, train, test fu.Struct, metricsDone boo
 	if w.training.Verbose != nil {
 		w.Verbose(fmt.Sprintf(
 			"[%3d] loss: %.5f/%.5f, error: %.5f/%.5f, score: %.5f",
-			w.Iteration(),Loss(train),Loss(test),Error(train),Error(test),score))
+			w.Iteration(), Loss(train), Loss(test), Error(train), Error(test), score))
 	}
 	return
 }
@@ -158,4 +158,3 @@ func (w *workout) Next() Workout {
 		perflog:   w.perflog,
 	}
 }
-

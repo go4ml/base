@@ -2,7 +2,7 @@ package fu
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/zorros/zorros"
+	"go-ml.dev/pkg/zorros"
 	"reflect"
 	"strings"
 	"sync"
@@ -137,7 +137,6 @@ func Unwrapper(v reflect.Type) func(lr Struct) reflect.Value {
 	}
 }
 
-
 var trfMu = sync.Mutex{}
 
 func Transformer(rt reflect.Type) func(reflect.Value, reflect.Value) reflect.Value {
@@ -248,26 +247,26 @@ func (lr Struct) Round(p int) Struct {
 	return c
 }
 
-
-func OnlyFilter(names []string, c ...string) func(Struct)Struct {
-	ns := make([]string,0,len(names))
-	nx := make([]int,0,len(names))
-	p := make([]func(string)bool,len(c))
-	for i,s := range c {
+func OnlyFilter(names []string, c ...string) func(Struct) Struct {
+	ns := make([]string, 0, len(names))
+	nx := make([]int, 0, len(names))
+	p := make([]func(string) bool, len(c))
+	for i, s := range c {
 		p[i] = Pattern(s)
 	}
 	for i, n := range names {
-		l: for _,f := range p {
+	l:
+		for _, f := range p {
 			if f(n) {
-				ns = append(ns,n)
-				nx = append(nx,i)
+				ns = append(ns, n)
+				nx = append(nx, i)
 				break l
 			}
 		}
 	}
-	return func(lr Struct)Struct {
-		columns := make([]reflect.Value,len(ns))
-		for i,x := range nx {
+	return func(lr Struct) Struct {
+		columns := make([]reflect.Value, len(ns))
+		for i, x := range nx {
 			columns[i] = lr.Columns[x]
 		}
 		return Struct{Names: ns, Columns: columns}

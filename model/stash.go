@@ -1,9 +1,9 @@
 package model
 
 import (
-	"go-ml.dev/pkg/iokit"
 	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/zorros/zorros"
+	"go-ml.dev/pkg/iokit"
+	"go-ml.dev/pkg/zorros"
 	"io"
 )
 

@@ -19,14 +19,14 @@ func Mse(a, b []float32) float32 {
 
 func Flatnr(a [][]float32) []float32 {
 	n := 0
-	for _,x := range a {
+	for _, x := range a {
 		n += len(x)
 	}
-	r := make([]float32,n)
+	r := make([]float32, n)
 	i := 0
-	for _,x := range a {
-		copy(r[i:i+len(x)],x)
-		i+=len(x)
+	for _, x := range a {
+		copy(r[i:i+len(x)], x)
+		i += len(x)
 	}
 	return r
 }

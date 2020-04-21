@@ -4,7 +4,7 @@ import (
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/fu/verbose"
 	"go-ml.dev/pkg/base/model"
-	"go-ml.dev/pkg/zorros/zorros"
+	"go-ml.dev/pkg/zorros"
 	"math"
 	"math/rand"
 )
@@ -71,7 +71,7 @@ func (ss Space) Optimize(trails int) (best Report, err error) {
 	opt := &optimizer{}
 	seed := fu.Seed(ss.Seed)
 	rng := rand.New(rand.NewSource(int64(seed)))
-	sm := &sampler{10, 24,rng, 1}
+	sm := &sampler{10, 24, rng, 1}
 	for rno := 0; rno < trails; rno++ {
 
 		for k, d := range ss.Variance {
@@ -92,9 +92,9 @@ func (ss Space) Optimize(trails int) (best Report, err error) {
 				Features: ss.Features,
 				Test:     kfoldTest,
 			}).Train(model.Training{
-				Iterations: ss.Iterations,
-				Metrics:    ss.Metrics,
-				Score:      ss.Score,
+				Iterations:   ss.Iterations,
+				Metrics:      ss.Metrics,
+				Score:        ss.Score,
 				ScoreHistory: ss.ScoreHistory,
 			})
 			if err != nil {

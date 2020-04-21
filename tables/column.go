@@ -2,7 +2,7 @@ package tables
 
 import (
 	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/zorros/zorros"
+	"go-ml.dev/pkg/zorros"
 	"reflect"
 )
 
@@ -473,9 +473,9 @@ func (c *Column) TensorReals(docopy ...bool) [][]float32 {
 		panic(zorros.Panic(zorros.New("column type is not tensor")))
 	}
 	t := c.column.Interface().([]fu.Tensor)
-	r := make([][]float32,0,0)
-	for _,x := range t {
-		 r = append(r,x.Floats32(fu.Fnzb(docopy...)))
+	r := make([][]float32, 0, 0)
+	for _, x := range t {
+		r = append(r, x.Floats32(fu.Fnzb(docopy...)))
 	}
 	return r
 }

@@ -182,7 +182,7 @@ func (t tensor64f) Floats32(...bool) (r []float32) {
 func (t tensor32f) Floats32(c ...bool) []float32 {
 	if Fnzb(c...) {
 		r := make([]float32, len(t.values))
-		copy(r,t.values)
+		copy(r, t.values)
 		return r
 	}
 	return t.values
@@ -239,7 +239,7 @@ func MakeFloat32Tensor(channels, height, width int, values []float32, docopy ...
 		v = make([]float32, channels*height*width)
 	}
 	if width <= 0 {
-		width = len(values)/(channels*height)
+		width = len(values) / (channels * height)
 	}
 	x := tensor32f{
 		dimension: dimension{

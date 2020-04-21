@@ -180,7 +180,7 @@ func (zf Batch) Transform(tf func(int) (FeaturesMapper, error)) Batch {
 /*
 Reduce batches to values
 */
-func (zf Batch) Reduce(tf func(t *Table)(fu.Struct,bool,error)) Lazy {
+func (zf Batch) Reduce(tf func(t *Table) (fu.Struct, bool, error)) Lazy {
 	return func() lazy.Stream {
 		f := fu.AtomicFlag{Value: 0}
 		z := zf.Source()

@@ -3,7 +3,7 @@ package tables
 import (
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/fu/lazy"
-	"go-ml.dev/pkg/zorros/zorros"
+	"go-ml.dev/pkg/zorros"
 	"reflect"
 	"sync"
 )
@@ -307,7 +307,7 @@ func (zf Lazy) False(c string) Lazy {
 func (zf Lazy) Only(c ...string) Lazy {
 	return func() lazy.Stream {
 		z := zf()
-		var only func(fu.Struct)fu.Struct
+		var only func(fu.Struct) fu.Struct
 		mu := sync.Mutex{}
 		f := fu.AtomicFlag{}
 		return func(index uint64) (v reflect.Value, err error) {
@@ -319,7 +319,7 @@ func (zf Lazy) Only(c ...string) Lazy {
 			if !f.State() {
 				mu.Lock()
 				if !f.State() {
-					only = fu.OnlyFilter(lr.Names,c...)
+					only = fu.OnlyFilter(lr.Names, c...)
 					f.Set()
 				}
 				mu.Unlock()
@@ -385,7 +385,7 @@ func (zf Lazy) Kfold(seed int, kfold int, k int, name string) Lazy {
 	}
 }
 
-func (zf Lazy) Transform(f func(fu.Struct)(fu.Struct,bool,error)) Lazy {
+func (zf Lazy) Transform(f func(fu.Struct) (fu.Struct, bool, error)) Lazy {
 	return func() lazy.Stream {
 		z := zf()
 		return func(index uint64) (v reflect.Value, err error) {
@@ -395,8 +395,12 @@ func (zf Lazy) Transform(f func(fu.Struct)(fu.Struct,bool,error)) Lazy {
 			}
 			lr := v.Interface().(fu.Struct)
 			lr, ok, err := f(lr)
-			if err != nil { return fu.False, err }
-			if !ok { return fu.True, nil }
+			if err != nil {
+				return fu.False, err
+			}
+			if !ok {
+				return fu.True, nil
+			}
 			return reflect.ValueOf(lr), nil
 		}
 	}
@@ -410,7 +414,7 @@ func (zf Lazy) BatchReduce(batch int, tf func(*Table) (fu.Struct, bool, error)) 
 	return zf.Batch(batch).Reduce(tf)
 }
 
-func (zf Lazy) Foreach(f func(fu.Struct)error) (err error) {
+func (zf Lazy) Foreach(f func(fu.Struct) error) (err error) {
 	return zf.Drain(func(v reflect.Value) error {
 		if v.Kind() != reflect.Bool {
 			lr := v.Interface().(fu.Struct)

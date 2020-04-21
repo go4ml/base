@@ -14,7 +14,7 @@ import (
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/model"
 	"go-ml.dev/pkg/base/tables"
-	"go-ml.dev/pkg/zorros/zorros"
+	"go-ml.dev/pkg/zorros"
 	"reflect"
 )
 
@@ -109,7 +109,7 @@ type Space struct {
 /*
 Apply apples params to a model
 */
-func Apply(p Params,m map[string]reflect.Value) {
+func Apply(p Params, m map[string]reflect.Value) {
 	for k, v := range p {
 		ref, ok := m[k]
 		if !ok {

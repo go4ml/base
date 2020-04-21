@@ -181,9 +181,9 @@ func (zf Lazy) TrueIfEq(c string, v interface{}, flag string) Lazy {
 				j, _ = nx.Set(lr.Pos(c))
 			}
 			if eq(lr.ValueAt(j)) {
-				lr.Set(flag,fu.True)
+				lr.Set(flag, fu.True)
 			} else {
-				lr.Set(flag,fu.False)
+				lr.Set(flag, fu.False)
 			}
 			return
 		}
@@ -227,9 +227,9 @@ func (zf Lazy) TrueIfNe(c string, v interface{}, flag string) Lazy {
 				j, _ = nx.Set(lr.Pos(c))
 			}
 			if !eq(lr.ValueAt(j)) {
-				lr.Set(flag,fu.True)
+				lr.Set(flag, fu.True)
 			} else {
-				lr.Set(flag,fu.False)
+				lr.Set(flag, fu.False)
 			}
 			return
 		}
