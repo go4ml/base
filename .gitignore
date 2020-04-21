@@ -1,0 +1,7 @@
+*~
+.*
+*.txt
+*.csv
+c.out
+gocov.txt
+tests.test
