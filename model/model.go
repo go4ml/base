@@ -3,8 +3,10 @@ package model
 import (
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/tables"
+	"go-ml.dev/pkg/iokit"
 	"go-ml.dev/pkg/zorros"
 	"io"
+	"path/filepath"
 )
 
 /*
@@ -96,4 +98,11 @@ type GpuPredictionModel interface {
 	// it's a recommendation only, if GPU is not available or it's impossible to use it
 	// the cpu will be used instead
 	Gpu(...int) PredictionModel
+}
+
+func Path(s string) string {
+	if filepath.IsAbs(s) {
+		return s
+	}
+	return iokit.CacheFile(filepath.Join("go-ml", "Models", s))
 }
