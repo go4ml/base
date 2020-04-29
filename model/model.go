@@ -106,3 +106,18 @@ func Path(s string) string {
 	}
 	return iokit.CacheFile(filepath.Join("go-ml", "Models", s))
 }
+
+/*
+Params is a set of hyper-parameters used by hyper-parameter optimization to generate new model
+*/
+type Params map[string]float64
+
+/*
+Get value of the parameter by name if exists and dflt value otherwise
+*/
+func (p Params) Get(name string, dflt float64) float64 {
+	if v, ok := p[name]; ok {
+		return v
+	}
+	return dflt
+}
