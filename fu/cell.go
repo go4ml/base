@@ -2,6 +2,7 @@ package fu
 
 import (
 	"fmt"
+	"go-ml.dev/pkg/zorros"
 	"reflect"
 	"strings"
 )
@@ -79,4 +80,28 @@ func (c Cell) Real() float32 {
 
 func (c Cell) Float() float64 {
 	return Convert(c.Value, false, Float64).Interface().(float64)
+}
+
+func (c Cell) Reals(docopy ...bool) []float32 {
+	if c.Type() != TensorType {
+		panic(zorros.Panic(zorros.New("cell type is not tensor")))
+	}
+	z := c.Interface().(Tensor)
+	return z.Floats32(docopy...)
+}
+
+func (c Cell) Values() interface{} {
+	if c.Type() != TensorType {
+		panic(zorros.Panic(zorros.New("cell type is not tensor")))
+	}
+	z := c.Interface().(Tensor)
+	return z.Values()
+}
+
+func (c Cell) Volume() int {
+	if c.Type() != TensorType {
+		panic(zorros.Panic(zorros.New("cell type is not tensor")))
+	}
+	z := c.Interface().(Tensor)
+	return z.Volume()
 }

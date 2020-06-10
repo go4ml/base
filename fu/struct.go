@@ -272,3 +272,45 @@ func OnlyFilter(names []string, c ...string) func(Struct) Struct {
 		return Struct{Names: ns, Columns: columns}
 	}
 }
+
+func tensorUnpacker(names []string, c string, volume int) func(lr Struct) Struct {
+	j := IndexOf(c, names)
+	ns := make([]string, len(names)-1+volume)
+	k := 0
+	for i, n := range names {
+		if i != j {
+			ns[k] = n
+			k++
+		}
+	}
+	for i := 1; k < len(ns); k++ {
+		ns[k] = fmt.Sprintf("%v%v", c, i)
+		i++
+	}
+	k = len(names) - 1
+	return func(lr Struct) Struct {
+		t := lr.ValueAt(j).Interface().(Tensor)
+		columns := make([]reflect.Value, len(lr.Names)-1+t.Volume())
+		na := Bits{}
+		t.Extract(columns[k:])
+		n := 0
+		for i, v := range lr.Columns {
+			if i != j {
+				if lr.Na.Bit(i) {
+					na.Set(j, true)
+				}
+				columns[n] = v
+				n++
+			}
+		}
+		return Struct{ns, columns, na}
+	}
+}
+
+func TensorUnpacker(lr Struct, c string) func(lr Struct) Struct {
+	return tensorUnpacker(lr.Names, c, lr.Value(c).Interface().(Tensor).Volume())
+}
+
+func (lr Struct) UnpackTensor(c string) Struct {
+	return TensorUnpacker(lr, c)(lr)
+}

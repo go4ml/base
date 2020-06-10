@@ -4,12 +4,46 @@ import (
 	"fmt"
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/fu/lazy"
+	"math"
 	"reflect"
 )
 
-func equalf(c interface{}) func(v reflect.Value) bool {
-	vc := reflect.ValueOf(c)
+const epsilon = 1e-9
+
+func equalf(vc reflect.Value) func(v reflect.Value) bool {
 	switch vc.Kind() {
+	case reflect.Slice:
+		vv := []func(reflect.Value) bool{}
+		for i := 0; i < vc.Len(); i++ {
+			vv = append(vv, equalf(vc.Index(i)))
+		}
+		return func(v reflect.Value) bool {
+			for _, f := range vv {
+				if f(v) {
+					return true
+				}
+			}
+			return false
+		}
+	case reflect.Interface:
+		return equalf(vc.Elem())
+	case reflect.Float32, reflect.Float64:
+		vv := vc.Float()
+		return func(v reflect.Value) bool {
+			switch v.Kind() {
+			case reflect.Float64, reflect.Float32:
+				return math.Abs(v.Float()-vv) < epsilon
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				return math.Abs(float64(v.Uint())-vv) < epsilon
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				return math.Abs(float64(v.Int())-vv) < epsilon
+			default:
+				if v.Type() == fu.Fixed8Type {
+					return math.Abs(float64(v.Interface().(fu.Fixed8).Float32())-vv) < epsilon
+				}
+			}
+			return false
+		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		vv := vc.Int()
 		return func(v reflect.Value) bool {
@@ -20,6 +54,10 @@ func equalf(c interface{}) func(v reflect.Value) bool {
 				return int64(v.Uint()) == vv
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				return v.Int() == vv
+			default:
+				if v.Type() == fu.Fixed8Type {
+					return int64(v.Interface().(fu.Fixed8).Float32()) == vv
+				}
 			}
 			return false
 		}
@@ -33,6 +71,10 @@ func equalf(c interface{}) func(v reflect.Value) bool {
 				return uint64(v.Uint()) == vv
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				return v.Uint() == vv
+			default:
+				if v.Type() == fu.Fixed8Type {
+					return uint64(v.Interface().(fu.Fixed8).Float32()) == vv
+				}
 			}
 			return false
 		}
@@ -144,8 +186,16 @@ func greatf(c interface{}) func(v reflect.Value) bool {
 	}
 }
 
-func (zf Lazy) IfEq(c string, v interface{}) Lazy {
-	eq := equalf(v)
+func (zf Lazy) IfEq(c string, v ...interface{}) Lazy {
+	var eq func(reflect.Value) bool
+	if len(v) == 0 {
+		return zf
+	}
+	if len(v) > 2 {
+		eq = equalf(reflect.ValueOf(v))
+	} else {
+		eq = equalf(reflect.ValueOf(v[0]))
+	}
 	return func() lazy.Stream {
 		z := zf()
 		nx := fu.AtomicSingleIndex{}
@@ -167,7 +217,7 @@ func (zf Lazy) IfEq(c string, v interface{}) Lazy {
 }
 
 func (zf Lazy) TrueIfEq(c string, v interface{}, flag string) Lazy {
-	eq := equalf(v)
+	eq := equalf(reflect.ValueOf(v))
 	return func() lazy.Stream {
 		z := zf()
 		nx := fu.AtomicSingleIndex{}
@@ -191,7 +241,7 @@ func (zf Lazy) TrueIfEq(c string, v interface{}, flag string) Lazy {
 }
 
 func (zf Lazy) IfNe(c string, v interface{}) Lazy {
-	eq := equalf(v)
+	eq := equalf(reflect.ValueOf(v))
 	return func() lazy.Stream {
 		z := zf()
 		nx := fu.AtomicSingleIndex{}
@@ -213,7 +263,7 @@ func (zf Lazy) IfNe(c string, v interface{}) Lazy {
 }
 
 func (zf Lazy) TrueIfNe(c string, v interface{}, flag string) Lazy {
-	eq := equalf(v)
+	eq := equalf(reflect.ValueOf(v))
 	return func() lazy.Stream {
 		z := zf()
 		nx := fu.AtomicSingleIndex{}

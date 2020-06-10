@@ -56,6 +56,15 @@ func Memorize(output iokit.Output, m MemorizeMap) error {
 }
 
 /*
+LuckyMemorize writes models directory to single output
+*/
+func LuckyMemorize(output iokit.Output, m MemorizeMap) {
+	if err := Memorize(output, m); err != nil {
+		panic(zorros.Panic(zorros.Trace(err)))
+	}
+}
+
+/*
 CollectionWriter is an abstraction of a collection creator
 */
 type CollectionWriter struct {

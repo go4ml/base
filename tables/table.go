@@ -9,6 +9,7 @@ import (
 	"go-ml.dev/pkg/base/fu/lazy"
 	"golang.org/x/xerrors"
 	"math/bits"
+	"math/rand"
 	"reflect"
 )
 
@@ -441,7 +442,7 @@ Or inserts empty column
 
 */
 func (t *Table) Append(o interface{}) *Table {
-	return t.Concat(New(o))
+	return Concat(t, New(o))
 }
 
 /*
@@ -454,36 +455,37 @@ Concat concats two tables into new one
 	q.Row(1) -> {"Petrov",44,0}
 */
 func (t *Table) Concat(a *Table) *Table {
-	names := t.Names()
-	columns := make([]reflect.Value, len(names), len(names))
-	copy(columns, t.raw.Columns)
-	na := make([]fu.Bits, len(names))
-	copy(na, t.raw.Na)
+	/*	names := t.Names()
+		columns := make([]reflect.Value, len(names), len(names))
+		copy(columns, t.raw.Columns)
+		na := make([]fu.Bits, len(names))
+		copy(na, t.raw.Na)
 
-	for i, n := range a.raw.Names {
-		j := fu.IndexOf(n, names)
-		if j < 0 {
-			col := reflect.MakeSlice(a.raw.Columns[i].Type() /*[]type*/, t.raw.Length, t.raw.Length+a.raw.Length)
-			col = reflect.AppendSlice(col, a.raw.Columns[i])
-			names = append(names, n)
-			columns = append(columns, col)
-			na = append(na, fu.FillBits(t.raw.Length).Append(a.raw.Na[i], t.raw.Length))
-		} else {
-			columns[j] = reflect.AppendSlice(columns[j], a.raw.Columns[i])
-			na[j] = na[j].Append(a.raw.Na[i], t.raw.Length)
+		for i, n := range a.raw.Names {
+			j := fu.IndexOf(n, names)
+			if j < 0 {
+				col := reflect.MakeSlice(a.raw.Columns[i].Type(), t.raw.Length, t.raw.Length+a.raw.Length)
+				col = reflect.AppendSlice(col, a.raw.Columns[i])
+				names = append(names, n)
+				columns = append(columns, col)
+				na = append(na, fu.FillBits(t.raw.Length).Append(a.raw.Na[i], t.raw.Length))
+			} else {
+				columns[j] = reflect.AppendSlice(columns[j], a.raw.Columns[i])
+				na[j] = na[j].Append(a.raw.Na[i], t.raw.Length)
+			}
 		}
-	}
 
-	for i, col := range columns {
-		if col.Len() < a.raw.Length+t.raw.Length {
-			columns[i] = reflect.AppendSlice(
-				col,
-				reflect.MakeSlice(col.Type(), a.raw.Length, a.raw.Length))
-			na[i] = na[i].Append(fu.FillBits(a.raw.Length), t.raw.Length)
+		for i, col := range columns {
+			if col.Len() < a.raw.Length+t.raw.Length {
+				columns[i] = reflect.AppendSlice(
+					col,
+					reflect.MakeSlice(col.Type(), a.raw.Length, a.raw.Length))
+				na[i] = na[i].Append(fu.FillBits(a.raw.Length), t.raw.Length)
+			}
 		}
-	}
 
-	return MakeTable(names, columns, na, a.raw.Length+t.raw.Length)
+		return MakeTable(names, columns, na, a.raw.Length+t.raw.Length) */
+	return Concat(t, a)
 }
 
 /*
@@ -664,6 +666,20 @@ func (t *Table) With(column *Column, name string) *Table {
 	return MakeTable(names, columns, na, t.raw.Length)
 }
 
+func (t *Table) Without(name string) *Table {
+	names := make([]string, 0, len(t.raw.Names))
+	columns := make([]reflect.Value, 0, len(t.raw.Names))
+	na := make([]fu.Bits, 0, len(t.raw.Names))
+	for i, n := range t.raw.Names {
+		if n != name {
+			names = append(names, n)
+			columns = append(columns, t.raw.Columns[i])
+			na = append(na, t.raw.Na[i])
+		}
+	}
+	return MakeTable(names, columns, na, t.raw.Length)
+}
+
 func (t *Table) Round(prec int /*, columns ...string*/) *Table {
 	return t.Lazy().Round(prec).LuckyCollect()
 }
@@ -707,3 +723,77 @@ func Shape32f(v []float32, names ...string) *Table {
 	return MakeTable(names, columns, na, length)
 }
 */
+
+func Concat(x ...*Table) *Table {
+	l := 0
+	names := []string{}
+	columns := []reflect.Value{}
+	na := []fu.Bits{}
+
+	for _, a := range x {
+		for i, n := range a.raw.Names {
+			j := fu.IndexOf(n, names)
+			if j < 0 {
+				col := reflect.MakeSlice(a.raw.Columns[i].Type() /*[]type*/, l, l+a.raw.Length)
+				col = reflect.AppendSlice(col, a.raw.Columns[i])
+				names = append(names, n)
+				columns = append(columns, col)
+				na = append(na, fu.FillBits(l).Append(a.raw.Na[i], l))
+			} else {
+				columns[j] = reflect.AppendSlice(columns[j], a.raw.Columns[i])
+				na[j] = na[j].Append(a.raw.Na[i], l)
+			}
+		}
+
+		for i, col := range columns {
+			if col.Len() < a.raw.Length+l {
+				columns[i] = reflect.AppendSlice(
+					col,
+					reflect.MakeSlice(col.Type(), a.raw.Length, a.raw.Length))
+				na[i] = na[i].Append(fu.FillBits(a.raw.Length), l)
+			}
+		}
+
+		l += a.raw.Length
+	}
+
+	return MakeTable(names, columns, na, l)
+}
+
+func (t *Table) Set(c string, value interface{}) *Table {
+	v := reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(value)), t.Len(), t.Len())
+	vx := reflect.ValueOf(value)
+	for i := 0; i < v.Len(); i++ {
+		v.Index(i).Set(vx)
+	}
+	names := make([]string, len(t.raw.Names), len(t.raw.Names)+1)
+	columns := make([]reflect.Value, len(t.raw.Names), len(t.raw.Names)+1)
+	na := make([]fu.Bits, len(t.raw.Names), len(t.raw.Names)+1)
+	copy(names, t.raw.Names)
+	copy(columns, t.raw.Columns)
+	copy(na, t.raw.Na)
+	if j := fu.IndexOf(c, t.raw.Names); j >= 0 {
+		columns[j] = v
+		na[j] = fu.Bits{}
+	} else {
+		names = append(names, c)
+		columns = append(columns, v)
+		na = append(na, fu.Bits{})
+	}
+	return MakeTable(names, columns, na, t.raw.Length)
+}
+
+func (t *Table) Shuffle() *Table {
+	columns := make([]reflect.Value, len(t.raw.Columns))
+	na := make([]fu.Bits, len(t.raw.Columns))
+	for i, c := range t.raw.Columns {
+		columns[i] = reflect.MakeSlice(c.Type(), c.Len(), c.Len())
+	}
+	for i, n := range rand.Perm(t.raw.Length) {
+		for j, c := range t.raw.Columns {
+			columns[j].Index(n).Set(c.Index(i))
+			na[j].Set(n, t.raw.Na[j].Bit(i))
+		}
+	}
+	return MakeTable(t.raw.Names, columns, na, t.raw.Length)
+}

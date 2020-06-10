@@ -1,9 +1,11 @@
 package tables
 
 import (
+	"fmt"
 	"go-ml.dev/pkg/base/fu"
 	"go-ml.dev/pkg/base/fu/lazy"
 	"go-ml.dev/pkg/zorros"
+	"math"
 	"reflect"
 	"sync"
 )
@@ -129,9 +131,20 @@ func (zf Lazy) Collect() (t *Table, err error) {
 					columns[i] = reflect.MakeSlice(reflect.SliceOf(x.Type()), 0, iniCollectLength)
 				}
 			}
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Println(e)
+					fmt.Println(lr.String())
+					panic(e)
+				}
+			}()
 			for i, x := range lr.Columns {
-				columns[i] = reflect.Append(columns[i], x)
-				na[i].Set(length, lr.Na.Bit(i))
+				if lr.Na.Bit(i) {
+					columns[i] = reflect.Append(columns[i], reflect.Zero(columns[i].Type().Elem()))
+					na[i].Set(length, true)
+				} else {
+					columns[i] = reflect.Append(columns[i], x)
+				}
 			}
 			length++
 		}
@@ -155,7 +168,7 @@ func (zf Lazy) Drain(sink Sink) (err error) {
 	return lazy.Source(zf).Drain(sink)
 }
 
-func (zf Lazy) LuckySink(sink Sink) {
+func (zf Lazy) LuckyDrain(sink Sink) {
 	if err := zf.Drain(sink); err != nil {
 		panic(zorros.Panic(err))
 	}
@@ -422,4 +435,178 @@ func (zf Lazy) Foreach(f func(fu.Struct) error) (err error) {
 		}
 		return nil
 	})
+}
+
+func (zf Lazy) UnpackTensor(c string) Lazy {
+	return func() lazy.Stream {
+		var ft func(fu.Struct) fu.Struct
+		m := sync.Mutex{}
+		fc := fu.AtomicFlag{Value: 0}
+		z := zf()
+		return func(index uint64) (v reflect.Value, err error) {
+			v, err = z(index)
+			if err != nil || v.Kind() == reflect.Bool {
+				return
+			}
+			lr := v.Interface().(fu.Struct)
+			if !fc.State() {
+				m.Lock()
+				if !fc.State() {
+					ft = fu.TensorUnpacker(lr, c)
+					fc.Set()
+				}
+				m.Unlock()
+			}
+			return reflect.ValueOf(ft(lr)), nil
+		}
+	}
+}
+
+func LazyConcatf(f ...func() Lazy) Lazy {
+	return func() lazy.Stream {
+		zf := f[0]()()
+		fl := f[1:]
+		wc := fu.WaitCounter{Value: 0}
+		c := uint64(0)
+		return func(index uint64) (v reflect.Value, err error) {
+			if index == lazy.STOP {
+				v, err = zf(index)
+				wc.Stop()
+				return
+			}
+			if wc.Wait(index) {
+				v, err = zf(c)
+				c++
+				if err != nil {
+					wc.Stop()
+				} else {
+					if v.Kind() == reflect.Bool && !v.Bool() {
+						if len(fl) > 0 {
+							_, _ = zf(lazy.STOP)
+							zf = fl[0]()()
+							fl = fl[1:]
+							v = fu.True
+							c = 0
+						}
+					}
+					wc.Inc()
+				}
+			}
+			return
+		}
+	}
+}
+
+func LazyConcat(a ...AnyData) Lazy {
+	f := make([]func() Lazy, len(a))
+	for i, x := range a {
+		q := x
+		f[i] = func() Lazy { return q.Lazy() }
+	}
+	return LazyConcatf(f...)
+}
+
+func LazyZip(a ...AnyData) Lazy {
+	return func() lazy.Stream {
+		zf := make([]lazy.Stream, len(a))
+		vx := make([]fu.Struct, len(a))
+		dx := make([]uint64, len(a))
+		nx := []int{}
+		names := []string{}
+		for i, x := range a {
+			zf[i] = x.Lazy()()
+		}
+		wc := fu.WaitCounter{Value: 0}
+		return func(index uint64) (v reflect.Value, err error) {
+			if index == lazy.STOP {
+				for _, f := range zf {
+					_, _ = f(index)
+				}
+				wc.Stop()
+				return fu.False, nil
+			}
+			for wc.Wait(index) {
+				for i, f := range zf {
+				retry:
+					for {
+						v, err = f(dx[i])
+						dx[i]++
+						if err != nil || v.Kind() == reflect.Bool && !v.Bool() {
+							wc.Stop()
+							return fu.False, err
+						}
+						if v.Kind() != reflect.Bool {
+							vx[i] = v.Interface().(fu.Struct)
+							break retry
+						}
+					}
+				}
+				if len(names) == 0 {
+					for _, a := range vx {
+						for _, n := range a.Names {
+							if fu.IndexOf(n, names) < 0 {
+								nx = append(nx, len(names))
+								names = append(names, n)
+							} else {
+								nx = append(nx, -1)
+							}
+						}
+					}
+				}
+				k := 0
+				columns := make([]reflect.Value, len(names))
+				na := fu.Bits{}
+				for _, a := range vx {
+					for i, v := range a.Columns {
+						j := nx[k]
+						k++
+						if j >= 0 {
+							columns[j] = v
+							na.Set(j, a.Na.Bit(i))
+						}
+					}
+				}
+				lr := fu.Struct{names, columns, na}
+				wc.Inc()
+				return reflect.ValueOf(lr), nil
+			}
+			return fu.False, nil
+		}
+	}
+}
+
+func (zf Lazy) Reals() ([]float32, error) {
+	length := 0
+	r := []float32{}
+	err := zf.Drain(func(v reflect.Value) error {
+		if v.Kind() != reflect.Bool {
+			lr := v.Interface().(fu.Struct)
+			if len(lr.Names) != 1 {
+				return zorros.New("Lazy.Errors can handle only one column")
+			}
+			defer func() {
+				if e := recover(); e != nil {
+					fmt.Println(e)
+					fmt.Println(lr.String())
+					panic(e)
+				}
+			}()
+			if lr.Na.Bit(0) {
+				r = append(r, float32(math.NaN()))
+			} else {
+				r = append(r, fu.Cell{lr.Columns[0]}.Real())
+			}
+			length++
+		}
+		return nil
+	})
+	return r, err
+}
+
+func (zf Lazy) LuckyReals() []float32 {
+	r, err := zf.Reals()
+	if err != nil {
+		panic(zorros.Panic(err))
+	}
+	return r
 }

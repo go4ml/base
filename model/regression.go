@@ -35,6 +35,7 @@ func (m Regression) Names() []string {
 		LossCol,
 		RmseCol,
 		MaeCol,
+		MeCol,
 		TotalCol,
 	}
 }
@@ -45,6 +46,7 @@ type rgupdater struct {
 	subset    string
 	loss      float64
 	error     float64 // sum{|result-label|}
+	error1    float64 // sum{result-label}
 	error2    float64 // sum{(result-label)^2}
 	count     float64
 }
@@ -54,6 +56,7 @@ func (m *rgupdater) Complete() (fu.Struct, bool) {
 		squrederr := m.error2 / m.count
 		errsqrt := math.Sqrt(squrederr)
 		abserr := m.error / m.count
+		meanerr := m.error1 / m.count
 		columns := []reflect.Value{
 			reflect.ValueOf(m.iteration),
 			reflect.ValueOf(m.subset),
@@ -61,6 +64,7 @@ func (m *rgupdater) Complete() (fu.Struct, bool) {
 			reflect.ValueOf(m.loss / m.count),
 			reflect.ValueOf(errsqrt),
 			reflect.ValueOf(abserr),
+			reflect.ValueOf(meanerr),
 			reflect.ValueOf(int(m.count)),
 		}
 		goal := false
@@ -76,12 +80,15 @@ func (m *rgupdater) Complete() (fu.Struct, bool) {
 		false
 }
 
-func error1(a, b []float32) float64 {
+func error1(a, b []float32) (float64, float64) {
 	c := 0.
+	m := 0.
 	for i, v := range a {
-		c += math.Abs(float64(v - b[i]))
+		x := float64(v - b[i])
+		c += math.Abs(x)
+		m += x
 	}
-	return c / float64(len(a))
+	return c / float64(len(a)), m / float64(len(a))
 }
 
 func error2(a, b []float32) float64 {
@@ -94,19 +101,23 @@ func error2(a, b []float32) float64 {
 }
 
 func (m *rgupdater) Update(result, label reflect.Value, loss float64) {
-	var e, e2 float64
+	var e, e1, e2 float64
 	if result.Type() == fu.TensorType {
 		vr := result.Interface().(fu.Tensor).Floats32()
-		vl := label.Interface().(fu.Tensor).Floats32()
-		e = error1(vr, vl)
-		e2 = error2(vr, vl)
+		if t, ok := label.Interface().(fu.Tensor); ok {
+			vl := t.Floats32()
+			e, e1 = error1(vr, vl)
+			e2 = error2(vr, vl)
+		}
 	} else {
 		r := fu.Cell{result}.Float()
 		l := fu.Cell{label}.Float()
 		e = math.Abs(r - l)
+		e1 = r - l
 		e2 = e * e
 	}
 	m.error += e
+	m.error1 += e1
 	m.error2 += e2
 	m.loss += loss
 	m.count++

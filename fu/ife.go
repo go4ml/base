@@ -1,5 +1,7 @@
 package fu
 
+import "reflect"
+
 /*
 Ife returns x if expr == true else returns y
 */
@@ -54,6 +56,16 @@ func Ifed(expr bool, x float64, y float64) float64 {
 Ifes returns x if expr == true else returns y
 */
 func Ifes(expr bool, x string, y string) string {
+	if expr {
+		return x
+	}
+	return y
+}
+
+/*
+Ifev returns x if expr == true else returns y
+*/
+func Ifev(expr bool, x reflect.Value, y reflect.Value) reflect.Value {
 	if expr {
 		return x
 	}

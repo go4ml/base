@@ -8,6 +8,10 @@ import (
 // value in range [-1..1] with 2 digits precession
 type Fixed8 struct{ int8 }
 
+func (v Fixed8) Raw() int8 {
+	return v.int8
+}
+
 func (v Fixed8) String() string {
 	return fmt.Sprint(v.Float32())
 }
@@ -18,6 +22,10 @@ func (v Fixed8) Float32() float32 {
 
 func AsFixed8(v float32) Fixed8 {
 	return Fixed8{int8(v * 100)}
+}
+
+func RawAsFixed8(v int8) Fixed8 {
+	return Fixed8{v}
 }
 
 func Fast8f(s string) (v8 Fixed8, err error) {

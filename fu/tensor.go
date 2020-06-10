@@ -5,16 +5,6 @@ import (
 	"strconv"
 )
 
-type Tze int
-
-const (
-	TzeByte Tze = iota
-	TzeInt
-	TzeFixed8
-	TzeFloat32
-	TzeFloat64
-)
-
 type dimension struct{ Channels, Height, Width int }
 
 func (d dimension) Volume() int              { return d.Channels * d.Width * d.Height }
@@ -96,6 +86,12 @@ func (t tensor8u) Type() reflect.Type  { return Byte }
 func (t tensor32f) Type() reflect.Type { return Float32 }
 func (t tensor64f) Type() reflect.Type { return Float64 }
 
+func (t tensori) Magic() byte   { return 'i' }
+func (t tensor8f) Magic() byte  { return '8' }
+func (t tensor8u) Magic() byte  { return 'u' }
+func (t tensor32f) Magic() byte { return 'f' }
+func (t tensor64f) Magic() byte { return 'F' }
+
 func (t tensori) HotOne() (j int) {
 	for i, v := range t.values {
 		if t.values[j] < v {
@@ -141,11 +137,11 @@ func (t tensor64f) HotOne() (j int) {
 	return
 }
 
-func (t tensori) String() string   { return "" }
-func (t tensor8f) String() string  { return "" }
-func (t tensor8u) String() string  { return "" }
-func (t tensor32f) String() string { return "" }
-func (t tensor64f) String() string { return "" }
+func (t tensori) Extract(r []reflect.Value) {
+	for i, v := range t.values {
+		r[i] = reflect.ValueOf(v)
+	}
+}
 
 func (t tensori) Floats32(...bool) (r []float32) {
 	r = make([]float32, len(t.values))
@@ -153,6 +149,12 @@ func (t tensori) Floats32(...bool) (r []float32) {
 		r[i] = float32(v)
 	}
 	return
+}
+
+func (t tensor8f) Extract(r []reflect.Value) {
+	for i, v := range t.values {
+		r[i] = reflect.ValueOf(v)
+	}
 }
 
 func (t tensor8f) Floats32(...bool) (r []float32) {
@@ -163,6 +165,12 @@ func (t tensor8f) Floats32(...bool) (r []float32) {
 	return
 }
 
+func (t tensor8u) Extract(r []reflect.Value) {
+	for i, v := range t.values {
+		r[i] = reflect.ValueOf(v)
+	}
+}
+
 func (t tensor8u) Floats32(...bool) (r []float32) {
 	r = make([]float32, len(t.values))
 	for i, v := range t.values {
@@ -171,12 +179,24 @@ func (t tensor8u) Floats32(...bool) (r []float32) {
 	return
 }
 
+func (t tensor64f) Extract(r []reflect.Value) {
+	for i, v := range t.values {
+		r[i] = reflect.ValueOf(v)
+	}
+}
+
 func (t tensor64f) Floats32(...bool) (r []float32) {
 	r = make([]float32, len(t.values))
 	for i, v := range t.values {
 		r[i] = float32(v)
 	}
 	return
+}
+
+func (t tensor32f) Extract(r []reflect.Value) {
+	for i, v := range t.values {
+		r[i] = reflect.ValueOf(v)
+	}
 }
 
 func (t tensor32f) Floats32(c ...bool) []float32 {
@@ -192,18 +212,46 @@ type tensor interface {
 	Dimension() (c, h, w int)
 	Volume() int
 	Type() reflect.Type
+	Magic() byte
 	Values() interface{}
 	Index(index int) interface{}
-	String() string
 	ConvertElem(val string, index int) error
 	HotOne() int
 	Floats32(copy ...bool) []float32
+	Extract([]reflect.Value)
 }
 
 type Tensor struct{ tensor }
 
-//	gets base64-encoded xz-compressed stream as a string prefixed by \xE2\x9C\x97` (✗`)
+//	gets base64-encoded compressed stream as a string prefixed by \xE2\x9C\x97` (✗`)
 func DecodeTensor(string) (t Tensor, err error) {
+	return
+}
+
+func (t Tensor) Width() int {
+	_, _, w := t.Dimension()
+	return w
+}
+
+func (t Tensor) Height() int {
+	_, h, _ := t.Dimension()
+	return h
+}
+
+func (t Tensor) Depth() int {
+	c, _, _ := t.Dimension()
+	return c
+}
+
+func (t Tensor) String() (str string) {
+	return t.Encode(false)
+}
+
+func (t Tensor) Encode(compress bool) (str string) {
+	//t.Magic()
+	//t.Dimension()
+	//t.Values()
+	//gzip => base64
 	return
 }
 

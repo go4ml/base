@@ -58,6 +58,11 @@ MaeCol is the Mean of Absolute Error column name
 const MaeCol = "Mae"
 
 /*
+MaeCol is the Mean of Error column name
+*/
+const MeCol = "Me"
+
+/*
 AccuracyCol is the Error column name
 */
 const AccuracyCol = "Accuracy"

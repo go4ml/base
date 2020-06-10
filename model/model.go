@@ -7,6 +7,7 @@ import (
 	"go-ml.dev/pkg/zorros"
 	"io"
 	"path/filepath"
+	"reflect"
 )
 
 /*
@@ -120,4 +121,14 @@ func (p Params) Get(name string, dflt float64) float64 {
 		return v
 	}
 	return dflt
+}
+
+func (p Params) Apply(m map[string]reflect.Value) {
+	for k, v := range p {
+		ref, ok := m[k]
+		if !ok {
+			panic(zorros.Panic(zorros.Errorf("model does not have field `%v`", k)))
+		}
+		ref.Elem().Set(fu.Convert(reflect.ValueOf(v), false, ref.Type().Elem()))
+	}
 }

@@ -22,6 +22,10 @@ func Col(a interface{}) *Column {
 	return &Column{v, fu.Bits{}}
 }
 
+func (c *Column) Table(n string) *Table {
+	return MakeTable([]string{n}, []reflect.Value{c.column}, []fu.Bits{c.na}, c.Len())
+}
+
 /*
 Text returns column' value converted to string
 
@@ -319,6 +323,13 @@ func (c *Column) Interface(row int) interface{} {
 }
 
 /*
+Tensor returns column' values as Tensor if it's a Tensor
+*/
+func (c *Column) Tensor(row int) fu.Tensor {
+	return c.Index(row).Interface().(fu.Tensor)
+}
+
+/*
 ExtractAs extracts values as array with specified type
 
 	t := table.New([]struct{Name string; Age int; Rate float}{{"Ivanov",32,1.2},{"Petrov",44,1.5}})
@@ -468,12 +479,12 @@ func (c *Column) IsFloat() bool {
 	return t.Kind() == reflect.Float32 || t.Kind() == reflect.Float64
 }
 
-func (c *Column) TensorReals(docopy ...bool) [][]float32 {
+func (c *Column) Matrix(docopy ...bool) [][]float32 {
 	if c.Type() != fu.TensorType {
 		panic(zorros.Panic(zorros.New("column type is not tensor")))
 	}
-	t := c.column.Interface().([]fu.Tensor)
-	r := make([][]float32, 0, 0)
+	t := c.Inspect().([]fu.Tensor)
+	r := make([][]float32, 0, len(t))
 	for _, x := range t {
 		r = append(r, x.Floats32(fu.Fnzb(docopy...)))
 	}
