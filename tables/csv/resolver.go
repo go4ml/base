@@ -2,8 +2,8 @@ package csv
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/base/tables"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/base/tables"
 	"math"
 	"reflect"
 	"strconv"

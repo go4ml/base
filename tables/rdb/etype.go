@@ -3,8 +3,8 @@ package rdb
 import (
 	"database/sql"
 	"fmt"
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/zorros"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/zorros"
 	"reflect"
 )
 

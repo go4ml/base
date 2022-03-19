@@ -3,8 +3,8 @@ package model
 import (
 	"archive/zip"
 	"github.com/ulikunitz/xz"
-	"go-ml.dev/pkg/iokit"
-	"go-ml.dev/pkg/zorros"
+	"go4ml.xyz/iokit"
+	"go4ml.xyz/zorros"
 	"io"
 	"path/filepath"
 )

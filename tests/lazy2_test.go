@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/base/fu/lazy"
+	"go4ml.xyz/base/fu/lazy"
 	"gotest.tools/assert"
 	"reflect"
 	"testing"

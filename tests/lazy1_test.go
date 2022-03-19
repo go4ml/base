@@ -2,10 +2,10 @@ package tests
 
 import (
 	"bytes"
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/base/tables/csv"
-	"go-ml.dev/pkg/base/tables/rdb"
-	"go-ml.dev/pkg/iokit"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/base/tables/csv"
+	"go4ml.xyz/base/tables/rdb"
+	"go4ml.xyz/iokit"
 	"gotest.tools/assert"
 	"testing"
 )

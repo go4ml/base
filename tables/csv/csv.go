@@ -2,11 +2,11 @@ package csv
 
 import (
 	"encoding/csv"
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/base/fu/lazy"
-	"go-ml.dev/pkg/base/tables"
-	"go-ml.dev/pkg/iokit"
-	"go-ml.dev/pkg/zorros"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/base/fu/lazy"
+	"go4ml.xyz/base/tables"
+	"go4ml.xyz/iokit"
+	"go4ml.xyz/zorros"
 	"io"
 	"reflect"
 )

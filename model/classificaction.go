@@ -1,7 +1,7 @@
 package model
 
 import (
-	"go-ml.dev/pkg/base/fu"
+	"go4ml.xyz/base/fu"
 	"reflect"
 )
 

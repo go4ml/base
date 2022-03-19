@@ -2,7 +2,7 @@ package verbose
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/zorros/zlog"
+	"go4ml.xyz/zorros/zlog"
 )
 
 type VerboseKind int

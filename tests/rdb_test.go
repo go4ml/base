@@ -3,7 +3,7 @@ package tests
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
-	"go-ml.dev/pkg/base/tables/rdb"
+	"go4ml.xyz/base/tables/rdb"
 	"gotest.tools/assert"
 	"os"
 	"testing"

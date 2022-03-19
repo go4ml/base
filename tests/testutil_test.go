@@ -2,8 +2,8 @@ package tests
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/base/tables"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/base/tables"
 	"gotest.tools/assert"
 	"gotest.tools/assert/cmp"
 	"strings"

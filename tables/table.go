@@ -5,8 +5,8 @@ package tables
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/base/fu/lazy"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/base/fu/lazy"
 	"golang.org/x/xerrors"
 	"math/bits"
 	"math/rand"

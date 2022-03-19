@@ -1,7 +1,7 @@
 package model
 
 import (
-	"go-ml.dev/pkg/base/tables"
+	"go4ml.xyz/base/tables"
 )
 
 /*

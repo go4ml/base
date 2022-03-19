@@ -2,7 +2,7 @@ package tables
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/base/fu"
+	"go4ml.xyz/base/fu"
 	"strings"
 )
 

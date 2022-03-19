@@ -1,7 +1,7 @@
 package fu
 
 import (
-	"go-ml.dev/pkg/iokit"
+	"go4ml.xyz/iokit"
 	"path/filepath"
 )
 

@@ -1,8 +1,8 @@
 package lazy
 
 import (
-	"go-ml.dev/pkg/base/fu"
-	"go-ml.dev/pkg/zorros"
+	"go4ml.xyz/base/fu"
+	"go4ml.xyz/zorros"
 	"math"
 	"reflect"
 	"runtime"

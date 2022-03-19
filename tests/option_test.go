@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"go-ml.dev/pkg/base/fu"
+	"go4ml.xyz/base/fu"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -28,7 +28,7 @@ func Test_Option1(t *testing.T) {
 	assert.Assert(t, option1(Option1(true)) == true)
 	assert.Assert(t, option1(Option1(true), Option1(false)) == true)
 	assert.Assert(t, option1(Option1(false), Option1(true)) == false)
-	assert.Assert(t, option1(Option2(0)) == false)
+	assert.Assert(t, option1(Option2("0")) == false)
 	assert.Assert(t, option1() == false)
 
 }

@@ -2,7 +2,7 @@ package fu
 
 import (
 	"fmt"
-	"go-ml.dev/pkg/zorros"
+	"go4ml.xyz/zorros"
 	"reflect"
 	"strings"
 	"sync"

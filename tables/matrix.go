@@ -1,7 +1,7 @@
 package tables
 
 import (
-	"go-ml.dev/pkg/base/fu"
+	"go4ml.xyz/base/fu"
 	"golang.org/x/xerrors"
 	"reflect"
 )
